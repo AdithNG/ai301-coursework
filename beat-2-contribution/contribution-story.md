@@ -60,7 +60,7 @@ I installed the scout overlay on my Unit 1 `issue-select` skill and wrote `searc
 
 **Unit 6: Installed the voice-guard, patched the scout's scope check for the wild, and claimed the issue**
 
-I replaced `scope-bounded` with the patched `scope-feasible` check, keeping my own Unit 5 non-code-deliverable and support-request fail conditions since the staff patch text didn't carry them forward, and added the difficulty-note section so an open edge gets flagged instead of silently rejected or silently passed. Re-grading both of my accepted picks live under the new rubric kept both at accept, but #4356 came back **moderate** (the bug is narrowed to one of two candidate files, not pinned yet) while #4348 came back **ambitious** (its one-line body never defines what "block playlists" means) — a distinction the old rubric had no way to say out loud. Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue every unit's eval harness has hit; fixed it the same way, with `shutil.which`. My claim comment passed both the guard and `repro-check`'s claim-only-draft rubric and is now posted: https://github.com/code-charity/youtube/issues/4356#issuecomment-6482628565.
+I replaced `scope-bounded` with the patched `scope-feasible` check, keeping my own Unit 5 non-code-deliverable and support-request fail conditions since the staff patch text didn't carry them forward, and added the difficulty-note section so an open edge gets flagged instead of silently rejected or silently passed. Re-grading both of my accepted picks live under the new rubric kept both at accept, but #4356 came back **moderate** (the bug is narrowed to one of two candidate files, not pinned yet) while #4348 came back **ambitious** (its one-line body never defines what "block playlists" means) — a distinction the old rubric had no way to say out loud. Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue every unit's eval harness has hit; fixed it the same way, with `shutil.which`. My claim comment passed both the guard and `repro-check`'s claim-only-draft rubric and is now posted: https://github.com/code-charity/youtube/issues/4356#issuecomment-6482628565. Live reproduction, though, did not go as planned: testing on fresh installs in both Chrome and Firefox (the reporter's browser), the "fit to window" value saved correctly both times — the opposite of what's reported. `repro-check`'s full-package grading still came back accept, since its `evidence-supports-claim` check explicitly allows an honest, evidenced non-reproduction as a passing outcome rather than forcing a false confirmation; that's the rubric doing exactly the job it's meant to.
 
 **Unit 7: [one line on the tool work]**
 
@@ -120,31 +120,69 @@ An honest read of the scout: its biggest real miss this round wasn't a rubric ch
 
 **Environment Setup**
 
-[What a stranger would need to stand this up: your operating system,
-the relevant versions (language, runtime, package manager, the project
-itself), and how you set the project up. Then the challenges you faced
-and how you solved them, or that none came up.]
+Fork `AdithNG/youtube` cloned locally, master branch, current as of the repo's
+2026-10-26 state (latest release `v4.2400`). Tested in two browsers with
+fresh, unmodified installs: Chrome (latest), loaded unpacked via
+`chrome://extensions`; and Firefox 157.0.1 (installed specifically for this
+test, since the original reporter was on Firefox), loaded as a temporary
+add-on via `about:debugging#/runtime/this-firefox`. No special setup beyond
+the two installs — the setting under test is written by the extension's own
+menu page and doesn't require an open YouTube tab.
 
 **Steps to Reproduce**
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Open the extension's menu → Appearance → Player → Player Size.
+2. Select a control option ("Max. width within the page") and check
+   `chrome.storage.local.get("player_size", console.log)` (Chrome) /
+   `browser.storage.local.get("player_size").then(console.log)` (Firefox) —
+   confirms the write path works at all.
+3. Switch to "Old alternative ('Fit to window')" and re-run the same check.
+4. Observed result: in both browsers, the value updated correctly both
+   times — not the described failure.
 
 **Reproduction Evidence**
 
-- **Commit showing reproduction:** [link to commit in your fork]
-- **Screenshots/logs:** [if applicable]
-- **My findings:** [what you discovered during reproduction; an
-  honest, evidenced cannot-reproduce that led you to re-pick or ask
-  the maintainer belongs here and costs you nothing]
+- **Commit showing reproduction:** none — see My findings below.
+- **Screenshots/logs:** Chrome: `{player_size: 'max_width'}` then
+  `{player_size: 'fit_to_window'}`. Firefox: `Object { player_size:
+  "fit_to_window" }`. Full console transcripts in `repro-draft.md`.
+- **My findings:** I could not reproduce the bug as reported. The
+  investigator's Sept 23 comment traced the failure to `menu/satus.js`'s
+  select handler or `player_size`'s definition in
+  `menu/skeleton-parts/appearance.js`; reading both (my one scoped
+  orientation run, kept in my fork's `CLAUDE.local.md`), I found a
+  plausible mechanism: the storage setter dedupes a new value against an
+  in-memory cache that's updated optimistically before the real
+  `chrome.storage.local.set` call, and that call has no
+  `chrome.runtime.lastError` handling — a single failed write would
+  silently leave the cache believing the value already saved, so every
+  later selection of the same value would be skipped as a no-op. That
+  requires an existing, non-fresh storage state to trigger, which a
+  fresh install (both of my tests) never has — a plausible reason mine
+  didn't reproduce it while the original reporter's did. I checked the
+  commit history on both suspect files between the investigator's
+  comment and today; nothing touched the storage-write or dedup logic in
+  that window, so it wasn't silently fixed either. This stays an open
+  question, not a confirmed root cause, until I test on an existing
+  (non-fresh) profile instead of a clean install — which I haven't done
+  yet.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: repro-check (live mode, full package: claim-draft.md +
+  repro-draft.md graded together against the issue)
+- What it produced: an `accept` verdict on an honest non-reproduction —
+  the rubric's `evidence-supports-claim` check explicitly allows a
+  evidenced cannot-reproduce as a passing outcome, which is exactly what
+  this package is
+- Difficulties: none in the check itself; the real difficulty was
+  upstream of grading — the bug genuinely didn't reproduce on a fresh
+  install in either target browser, which the rubric can confirm is
+  honestly reported but can't resolve for me
+- What changed: nothing in the rubric; what changed was my own plan —
+  the next repro attempt needs an existing/upgraded profile, not another
+  fresh install, before I can confirm or rule out my storage-cache
+  hypothesis
 
 ---
 
