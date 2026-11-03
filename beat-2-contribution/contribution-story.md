@@ -122,27 +122,72 @@ An honest read of the scout: its biggest real miss this round wasn't a rubric ch
 
 ## Reproduction Process
 
-*Note: this section now covers #4293. #4356's reproduction attempt (an
-honest, evidenced non-repro on a fresh install in both Chrome and
-Firefox, accepted by `repro-check`) is preserved in the Why I Chose
-This Issue section above, as the reason for the pivot — not deleted,
-just no longer the active issue's repro record.*
+*Note: this section covers the final issue, `proCAT#860`. The two
+earlier reproduction attempts (`#4356`'s honest non-repro on a fresh
+install, and `#4293` turning out to already be fixed) are preserved in
+Why I Chose This Issue above as the reasons for each pivot — not
+deleted, just no longer the active issue's repro record.*
 
 **Environment Setup**
 
-[To fill once tested: same fork, same two browsers as before.]
+Fork `AdithNG/proCAT` cloned locally, main branch, current as of
+2026-11-03. Python/Django environment set up with `uv sync` (uv
+0.11.20) and `python manage.py migrate` — no Docker, no SSO/OIDC setup
+needed since this doesn't touch auth. Test runner is plain `pytest`
+(confirmed via README.md; CONTRIBUTING.md describes the testing
+requirement but never actually states the command).
 
 **Steps to Reproduce**
 
-1. [Set theme to "plain" in Appearance > Themes.]
-2. [Open a video with ambient lighting / cinema mode on, observe.]
-3. [Turn off Appearance > Player > Ambient Lighting, observe whether the blackout clears, per the thread's suggested isolation test.]
+1. Using the repo's own `phase`/`project_static` test fixtures (a
+   project with valid dates and a funded phase, but zero `Allocation`
+   records), call `project.fte(include_excess=False)` directly.
+2. Call `main.plots.create_allocation_plot_for_project(project,
+   x_range=None)` on the same project.
+3. Observed result: step 1 returns a real, computable FTE value (sum
+   `42.65`) — the data a plot would need exists. Step 2 returns `None`
+   anyway.
 
 **Reproduction Evidence**
 
-- **Commit showing reproduction:** [link to commit in your fork]
-- **Screenshots/logs:** [if applicable]
-- **My findings:** [pending the live test]
+- **Commit showing reproduction:** none — an isolated pytest run, not committed (see My findings).
+- **Screenshots/logs:**
+  ```
+  project.fte() with zero allocations: 42.65015190465062 (computable, not an error)
+  create_allocation_plot_for_project() returned: None
+  PASSED
+  ```
+- **My findings:** The bug reproduces cleanly today. `main/plots.py:678`'s
+  `create_allocation_plot_for_project` checks whether any `Allocation`
+  rows exist and returns `None` immediately if not — *before* it ever
+  computes `project.fte(...)`, which is the actual data an "always show
+  an initial FTE line" plot needs and which is fully available
+  regardless of allocations. I confirmed this with a direct, isolated
+  call rather than relying on the existing combined test
+  (`test_time_evolution_plot_no_plot`), which conflates this gate with
+  a separate one on the unrelated `evolution_plot`. One thing the issue
+  itself doesn't mention: `project.fte()` asserts `start_date`/
+  `end_date` are set, so a project with no dates would crash rather
+  than show an empty plot — the eventual fix needs to guard on missing
+  dates, not missing allocations. One honest gap: I only ran the
+  zero-allocation case, not a comparison run with allocations present
+  confirming the plot does render there — `repro-check` flagged this
+  correctly as a failed preferred check, not a blocker.
+
+**Toolkit**
+
+- Tool: repro-check (live mode, full package: claim-draft.md +
+  repro-draft.md graded together against the issue)
+- What it produced: an `accept` verdict on a direct, isolated
+  reproduction — every required check passed, with one preferred check
+  (`control-comparison`) honestly failed rather than papered over
+- Difficulties: the obvious existing test (`test_time_evolution_plot_no_plot`)
+  doesn't cleanly isolate this bug on its own, since it conflates two
+  separate plot-gating paths; writing a direct scratch test against
+  the function itself was the only way to get unambiguous evidence
+- What changed: nothing in the rubric; what I'd still do before
+  building the actual fix is the comparison run `control-comparison`
+  flagged as missing
 
 **Toolkit**
 
