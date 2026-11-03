@@ -97,26 +97,26 @@ An honest read of the scout: its biggest real miss this round wasn't a rubric ch
 
 **Problem Description**
 
-[In your own words, what is broken or missing?]
+On a project's detail page, the allocation plot (the chart showing how much FTE capacity is allocated to the project over time) is only shown once someone has actually been allocated to the project. Until then, there's no plot at all, so there's no way to see the project's required FTE up front.
 
 **Expected Behavior**
 
-[What should happen?]
+The plot should always show, even with zero allocations, starting with just the project's required FTE line so there's an initial sense of what the project needs before anyone is assigned.
 
 **Current Behavior**
 
-[What actually happens?]
+`main/plots.py:678`'s `create_allocation_plot_for_project` checks whether any `Allocation` rows exist for the project and returns `None` immediately if not — before it ever computes `project.fte(...)`, which is the actual FTE data the plot needs and which is fully computable regardless of allocations. The calling code (`create_project_evolution_layout`, `plots.py:764-772`) only appends the plot to the page if it isn't `None`, so the whole thing silently disappears.
 
 **Affected Components**
 
-[Which parts of the codebase are involved?]
+`main/plots.py` (`create_allocation_plot_for_project`, the fix location), `main/models.py` (`Project.fte()`, which the fix needs to call earlier — and which asserts `start_date`/`end_date` are set, a caveat the fix has to guard against separately), and `tests/main/test_views.py` (`TestProjectDetailInlineView::test_time_evolution_plot_no_plot`, whose premise — that zero allocations means no plot at all — will need rewriting once the fix lands).
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: my own reading of the code (scoped orientation, recorded in `CLAUDE.local.md`), confirmed by direct, isolated reproduction (see Reproduction Process)
+- What it produced: the exact fix location and a caveat the issue itself never mentioned (the `start_date`/`end_date` assertion)
+- Difficulties: none specific to this section — the harder part was isolating the bug cleanly, covered in Reproduction Process
+- What changed: nothing yet; this section is the diagnosis the fix is built from
 
 ---
 
@@ -189,42 +189,32 @@ requirement but never actually states the command).
   building the actual fix is the comparison run `control-comparison`
   flagged as missing
 
-**Toolkit**
-
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
-
 ---
 
 ## Solution Approach
 
 **Analysis**
 
-[Your analysis of the root cause: what is causing the issue, traced
-to the files and functions involved.]
+`main/plots.py:678-684`, `create_allocation_plot_for_project`, gates its entire body on `Allocation.objects.filter(project=project).exists()` and returns `None` before computing anything. The actual data the plot needs — `project.fte(include_excess=False)` (`main/models.py:530`) — doesn't depend on allocations at all: it sums the FTE trace from the project's phases and returns a zero-valued series if there are none, never erroring. `fte()` does assert `self.start_date is not None` and `self.end_date is not None` (models.py:547-548), so that's the real precondition for the plot, not the presence of allocations. The calling code (`create_project_evolution_layout`, plots.py:754-772) just appends whatever `create_allocation_plot_for_project` returns, so fixing the one function fixes the page.
 
 **Proposed Solution**
 
-[High-level description of your fix approach, and what you are
-deliberately NOT changing.]
+Move the `fte = project.fte(include_excess=False)` computation (and the "Project FTE" trace) above the allocations check, and replace the "no allocations → return None" early exit with a "no dates → return None" check instead, since that's the actual precondition `fte()` needs. The per-user allocation traces stay inside a loop over `Allocation.objects.filter(project=project)`, which naturally produces zero extra traces (just the one "Project FTE" line) when there are no allocations, instead of needing special-case handling. I'm deliberately **not** touching `create_project_evolution_plot` (the separate evolution/usage plot) or the outer `views.py` gate on the combined layout — both are unrelated to this bug, and `#859`'s open PR already touches a different part of this same file (multi-allocation traces), so I'm keeping this change minimal and non-overlapping.
 
 **Implementation Plan**
 
-1. [Modify file X to do Y]
-2. [Add or change Z]
-3. [Update tests]
+1. In `main/plots.py`, rewrite `create_allocation_plot_for_project`'s guard clause: replace `if not allocations.exists(): return None` with a check on `project.start_date`/`project.end_date`, and move the `fte = project.fte(...)` line above it.
+2. Rewrite `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot`, whose current premise (zero phases/allocations ⇒ no plot at all) no longer holds — it needs to assert the plot now *does* appear with just the "Project FTE" line.
+3. Add a direct unit test for `create_allocation_plot_for_project` in `tests/main/test_plots.py` covering the zero-allocation case explicitly (that file currently has zero references to "allocation" at all), per CONTRIBUTING.md's "every addition needs its own tests" rule.
 
-[Record deviations here as they happen: what changed mid-build and
-why. A recorded deviation is honest work; silent drift is not.]
+[No deviations yet — will record here if the build surfaces one.]
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: plan-check (live mode, `plan.md` + `plan-comment.md` graded against the issue and my own reproduction findings)
+- What it produced: an `accept` verdict on every required check; the one honest miss was the preferred `risk-named` check — my plan states no open risk or unknown anywhere, which is true but worth naming rather than reading as fully certain
+- Difficulties: the skill's live-mode procedure expects a posted week-2 repro comment on the issue as its evidence source, but this unit explicitly says not to post that report — I used my own `repro-draft.md`/Reproduction Process findings as the stand-in instead and flagged the gap rather than inventing a step
+- What changed: nothing in the plan itself yet (it passed as written); noting for my own build that I should state an explicit risk next time rather than writing a fully-confident plan
 
 ---
 
