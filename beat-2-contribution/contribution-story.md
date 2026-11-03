@@ -54,21 +54,21 @@ happened; these entries are the toolkit's own timeline.
 All four entries are graded. Keep every heading below, and fill each
 one in the week it belongs to.
 
-**Unit 5: Installed the scout, wrote a search strategy, and patched a real rubric gap the wild exposed**
+**Unit 5 (recorded 2026-11-03): Installed the scout, wrote a search strategy, and patched a real rubric gap the wild exposed**
 
 I installed the scout overlay on my Unit 1 `issue-select` skill and wrote `search-strategy.md` from my fit profile: three `gh search issues` queries, and a ranking pipeline that drops assigned/frontend-labeled/stale results and sorts the rest by comment count. The first scan's reply never closed with the required fenced JSON block, so I re-ran it with an explicit reminder before trusting the output. The second run graded cleanly, but it surfaced three real problems: one repo took 3 of 5 slots because the comment-count tie-break had no other ordering, a spelling-based label filter would have missed a "dashboard"-labeled frontend issue, and two of the five graded candidates (a screen-recording task, a screenshot-collection task) weren't code changes at all — my Unit 1 `scope-bounded` check passed both anyway, since it had only ever been written against sandbox issues, which are always code changes. I patched the ranking filters (a per-repo cap, a wider label list) and added a real fail condition to `scope-bounded` for non-code deliverables, logged in `scan-notes.md`. Revisited this on 2026-11-03 after my original pick fell through twice (couldn't reproduce one issue's bug on a fresh install, then found a second was already fixed under a different issue number): re-ran the same scan and it surfaced three more gaps no amount of passing checks had caught before — a data-entry task that only failed correctly because I read the repo's own CONTRIBUTING.md, a feature issue blocked by another still-open issue with no check for that at all, and the single best-scoped issue in the batch turning out to need macOS hardware I don't have. None of those are fixed yet; they're logged in `scan-notes.md` as real gaps. Settled on `intent-drift-skill#80` by hand-checking claim status directly via `gh` across a larger batch before reading any bodies, after the Issue Selection site surfaced the same already-claimed problem a third time. That pick needed an instructor exception though, since it came from my own scan rather than the site (the assignment allows this, but says to ask first), so I released it and went back to the site itself instead. Checking claim status *before* reading bodies this time (the same discipline, just applied to the site's own results) caught several more dead ends fast — a repo mistagged Python that's actually Haskell, an issue with four competing open PRs, a Fortran-primary climate-model repo, an internal tracking issue mixed into real candidates, and one good-looking issue already being worked by another contributor with an open PR up. **Final pick: `ImperialCollegeLondon/proCAT#860`**, genuinely clean and sourced from the site itself.
 
-**Unit 6: Installed the voice-guard and wrote my repo memory file**
+**Unit 6 (2026-11-03): Installed the voice-guard and wrote my repo memory file**
 
 Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue every eval harness has hit this term; fixed it the same way, with `shutil.which`. The guard caught a real mistake of mine before it went out: an early release-comment draft stated an old bug's root cause as my own verified fact when I'd only read it in a fix commit's comment, never run the broken code myself — the guard quoted my own rule back at me ("I name what I observed and what I only suspect, as two different things") and I rewrote it. For the memory file, one scoped-orientation run on `main/plots.py`/`views.py`/`models.py` found the exact root cause (`create_allocation_plot_for_project` returns early on zero allocations, before computing the project-FTE trace that doesn't need any) plus a caveat I hadn't seen myself: `Project.fte()` asserts dates are set, so the fix needs to guard on missing dates, not missing allocations. It also found that one existing test's premise (`test_time_evolution_plot_no_plot`) breaks once the fix lands and will need rewriting, not just a passing re-run — caught before I wrote a single line of the actual fix.
 
-**Unit 7: Installed the ship-gate, wrote my manifest, and let it catch a real mistake before the PR went out**
+**Unit 7 (2026-11-03): Installed the ship-gate, wrote my manifest, and let it catch a real mistake before the PR went out**
 
 Manifest: `uv sync` → `uv run mypy .` → `uv run pytest`, sourced from `.github/workflows/ci.yml`, both checks clean on `main` before I touched anything. Installing the ship-gate hit the exact same Windows `claude`-CLI-not-on-PATH issue every tool's eval harness has hit this term; fixed `check_gate.py` the same way, with `shutil.which`. The real value showed up on the first hand-run: `pr-precheck`'s `description-matches-diff` check rejected my branch because my PR description said the renamed test (`test_time_evolution_plot_no_phases_still_shows_allocation_plot`) now covered the no-dates case — it doesn't, it asserts the opposite (the plot now shows); the actual no-dates case is a separate test I'd named loosely. I'd genuinely gotten it backwards, not just worded it sloppily. Fixed the description, re-ran, got `ship-gate: PASS` on the second try, with both the manifest's checks and all eight `pr-precheck` checks passing.
 
-**Unit 8: Installed the PR-monitor, wrote my playbook from proCAT's own merge rhythm, and caught a real maintainer comment I'd have otherwise missed**
+**Unit 8 (2026-11-03): Installed the PR-monitor, wrote my playbook from proCAT's own merge rhythm, and caught a real maintainer comment I'd have otherwise missed**
 
-Built the staleness thresholds from the repo's actual merge history (`gh pr list --state merged`), not a guess: human-reviewed PRs sit 1 to 6 days before a batch-review pass, so I set 7 days of total silence before a nudge is even on the table. The free `--state` canary surfaced a failing CI check on my own PR (`pre-commit.ci`'s `ruff`/`ruff-format`, a real gate my manifest had missed since it isn't in `ci.yml` itself) before I'd even written the playbook; fixed it, added `ruff` to `ship-manifest.md`. The full run correctly read the PR thread as quiet under a day and drafted an honest wait note quoting my own 7-day rule instead of a premature nudge, exactly as it should. Separately, re-checking the issue thread by hand (not something the monitor itself reads) turned up a real maintainer comment suggesting a simpler fix than mine; I replied explaining why I kept a guard instead (the maintainer's version would crash on a dateless project), which the voice guard caught and corrected once for overclaiming ("exactly as you described") before it went out. Same Windows `claude`-CLI-not-on-PATH issue as every tool this term, fixed the same way, in `monitor.py` too.
+Built the staleness thresholds from the repo's actual merge history (`gh pr list --state merged`), not a guess: human-reviewed PRs sit 1 to 6 days before a batch-review pass, so I set 7 days of total silence before a nudge is even on the table. The free `--state` canary surfaced a failing CI check on my own PR (`pre-commit.ci`'s `ruff`/`ruff-format`, a real gate my manifest had missed since it isn't in `ci.yml` itself) before I'd even written the playbook; fixed it, added `ruff` to `ship-manifest.md`. The full run correctly read the PR thread as quiet under a day and drafted an honest wait note quoting my own 7-day rule instead of a premature nudge, exactly as it should. I kept that draft local and sent no nudge: under one day of quiet did not meet my seven-day threshold. The 2026-11-03 05:37 monitor report read one passing check, MERGEABLE with merge state BLOCKED, and REVIEW_REQUIRED; mergeability alone did not mean ready to merge. Separately, re-checking the issue thread by hand (not something the monitor itself reads) turned up a real maintainer comment suggesting a simpler fix than mine; I replied explaining why I kept a guard instead (the maintainer's version would crash on a dateless project), which the voice guard caught and corrected once for overclaiming ("exactly as you described") before it went out. Same Windows `claude`-CLI-not-on-PATH issue as every tool this term, fixed the same way, in `monitor.py` too.
 
 ---
 
@@ -183,9 +183,7 @@ requirement but never actually states the command).
   doesn't cleanly isolate this bug on its own, since it conflates two
   separate plot-gating paths; writing a direct scratch test against
   the function itself was the only way to get unambiguous evidence
-- What changed: nothing in the rubric; what I'd still do before
-  building the actual fix is the comparison run `control-comparison`
-  flagged as missing
+- What changed: nothing in the rubric; the initial reproduction lacked a control comparison; the completed implementation added `test_create_allocation_plot_for_project_with_allocations` to check that existing allocation traces remain
 
 ---
 
@@ -197,11 +195,11 @@ requirement but never actually states the command).
 
 **Proposed Solution**
 
-Move the `fte = project.fte(include_excess=False)` computation (and the "Project FTE" trace) above the allocations check, and replace the "no allocations → return None" early exit with a "no dates → return None" check instead, since that's the actual precondition `fte()` needs. The per-user allocation traces stay inside a loop over `Allocation.objects.filter(project=project)`, which naturally produces zero extra traces (just the one "Project FTE" line) when there are no allocations, instead of needing special-case handling. I'm deliberately **not** touching `create_project_evolution_plot` (the separate evolution/usage plot) or the outer `views.py` gate on the combined layout — both are unrelated to this bug, and `#859`'s open PR already touches a different part of this same file (multi-allocation traces), so I'm keeping this change minimal and non-overlapping.
+Move the `fte = project.fte(include_excess=False)` computation (and the "Project FTE" trace) after a date-range guard, and replace the "no allocations → return None" early exit with a "no dates → return None" check instead, since that's the actual precondition `fte()` needs. The per-user allocation traces stay inside a loop over `Allocation.objects.filter(project=project)`, which naturally produces zero extra traces (just the one "Project FTE" line) when there are no allocations, instead of needing special-case handling. I'm deliberately **not** touching `create_project_evolution_plot` (the separate evolution/usage plot) or the outer `views.py` gate on the combined layout — both are unrelated to this bug, and `#859`'s open PR already touches a different part of this same file (multi-allocation traces), so I'm keeping this change minimal and non-overlapping.
 
 **Implementation Plan**
 
-1. In `main/plots.py`, rewrite `create_allocation_plot_for_project`'s guard clause: replace `if not allocations.exists(): return None` with a check on `project.start_date`/`project.end_date`, and move the `fte = project.fte(...)` line above it.
+1. In `main/plots.py`, rewrite `create_allocation_plot_for_project`'s guard clause: replace `if not allocations.exists(): return None` with a check on `project.start_date`/`project.end_date`, and keep `fte = project.fte(...)` after that guard so dateless projects cannot reach the assertion.
 2. Rewrite `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot`, whose current premise (zero phases/allocations ⇒ no plot at all) no longer holds — it needs to assert the plot now *does* appear with just the "Project FTE" line.
 3. Add a direct unit test for `create_allocation_plot_for_project` in `tests/main/test_plots.py` covering the zero-allocation case explicitly (that file currently has zero references to "allocation" at all), per CONTRIBUTING.md's "every addition needs its own tests" rule.
 
@@ -218,7 +216,21 @@ Move the `fte = project.fte(include_excess=False)` computation (and the "Project
 
 ## Testing Strategy
 
-Re-ran the exact reproduction from Reproduction Process on the fix branch: before, `create_allocation_plot_for_project()` returned `None` despite a computable FTE value; after, it returns a real `figure` with a single "Project FTE" legend item. Three new direct unit tests in `tests/main/test_plots.py` cover the function itself (zero allocations, allocations present, no date range — the real remaining no-plot case). `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot` is rewritten and renamed, since its old premise (zero allocations ⇒ no plot) no longer holds; a new test covers the genuinely-still-empty Tentative/no-dates case instead. Full suite: 272 passed (268 on `main`, net +4), `mypy .` clean, matching the ship manifest's checks. Full before/after output in `test_evidence.md`.
+Re-ran the exact reproduction from Reproduction Process on the fix branch: before, `create_allocation_plot_for_project()` returned `None` despite a computable FTE value; after, it returns a real `figure` with a single "Project FTE" legend item. Three new direct unit tests in `tests/main/test_plots.py` cover the function itself (zero allocations, allocations present, no date range — the real remaining no-plot case). `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot` is rewritten and renamed, since its old premise (zero allocations ⇒ no plot) no longer holds; a new test covers the genuinely-still-empty Tentative/no-dates case instead. Full suite: 272 passed (268 on `main`, net +4), `mypy .` clean, matching the ship manifest's checks. The two observable checks are: (1) with valid dates and zero allocations, return a figure whose only legend item is "Project FTE" and render the project detail page's Bokeh script/div; (2) preserve existing allocation traces when allocations exist and return `None` without crashing when dates are absent.
+
+Recorded verification from the contribution run on 2026-11-03 (included here because the separate `test_evidence.md` is not a graded artifact):
+
+```text
+Before: project.fte() = 42.65015190465062; allocation plot = None
+After: zero-allocation direct test PASSED
+After: no-phases project-detail rendering test PASSED
+After: no-dates project-detail test PASSED
+Targeted run: 3 passed in 3.10s
+Full suite: 272 passed in 106.58s (main baseline: 268)
+uv run mypy .: Success: no issues found in 50 source files
+uv run ruff check .: All checks passed!
+uv run ruff format --check .: 56 files already formatted
+```
 
 **Toolkit**
 
@@ -236,7 +248,7 @@ built, decisions you made when you made them, wrong turns included.]
 
 **2026-11-03**
 
-Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: moved `fte = project.fte(...)` above the guard clause in `create_allocation_plot_for_project` and swapped the allocations check for a dates check. Ran `test_time_evolution_plot_no_plot` first to confirm it failed as predicted (a plot now appears, so its old "no plot" assertion no longer held) — that failure was itself confirmation the fix works, not a problem to hide. Rewrote it to assert the plot *does* appear with just the "Project FTE" line, renamed it since "no_plot" was no longer accurate, and added a genuinely-still-no-plot case (a Tentative project with no dates) to cover the real remaining gate. Also added three direct unit tests on `create_allocation_plot_for_project` itself in `test_plots.py` (zero allocations, allocations present, no dates) — that file had zero prior coverage of this function at all. Full suite: 272 passed (268 on main, net +4), `mypy .` clean. No deviations from the plan.
+Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: replaced the allocations guard in `create_allocation_plot_for_project` with a dates guard, kept `fte = project.fte(...)` after that guard, and queried allocations in the trace loop. Ran `test_time_evolution_plot_no_plot` first to confirm it failed as predicted (a plot now appears, so its old "no plot" assertion no longer held) — that failure was itself confirmation the fix works, not a problem to hide. Rewrote it to assert the plot *does* appear with just the "Project FTE" line, renamed it since "no_plot" was no longer accurate, and added a genuinely-still-no-plot case (a Tentative project with no dates) to cover the real remaining gate. Also added three direct unit tests on `create_allocation_plot_for_project` itself in `test_plots.py` (zero allocations, allocations present, no dates) — that file had zero prior coverage of this function at all. Full suite: 272 passed (268 on main, net +4), `mypy .` clean. No deviations from the plan.
 
 **Toolkit**
 
@@ -251,13 +263,15 @@ Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: m
 
 **PR Link:** https://github.com/ImperialCollegeLondon/proCAT/pull/867
 
-**PR Description:** The allocation plot on a project's detail page was only shown once someone was actually allocated to the project, because `create_allocation_plot_for_project` returned `None` before ever computing the project's FTE data, which doesn't need any allocations to exist. The fix moves that computation above the guard clause and checks for a missing date range instead of missing allocations. Includes before/after test evidence (272 passed, net +4, mypy clean, ruff clean), a renamed/rewritten test for the behavior that changed, three new direct unit tests for the function itself, a note on a maintainer's simpler suggested fix and why I diverged from it (it would crash on a dateless project), and a disclosure of how Claude Code was used throughout.
+**Diff accounted for (2026-11-03):** Three upstream files changed, 101 insertions and 9 deletions: `main/plots.py` (date guard, docstring, allocation loop), `tests/main/test_plots.py` (three direct regression/control tests), and `tests/main/test_views.py` (rewritten rendering test and new no-dates test). No course write-ups, local tool files, or setup changes are in the upstream diff.
+
+**PR Description:** The allocation plot on a project's detail page was only shown once someone was actually allocated to the project, because `create_allocation_plot_for_project` returned `None` before ever computing the project's FTE data, which doesn't need any allocations to exist. The fix checks for a missing date range instead of missing allocations, then computes FTE after the date guard. Includes before/after test evidence (272 passed, net +4, mypy clean, ruff clean), a renamed/rewritten test for the behavior that changed, three new direct unit tests for the function itself, a note on a maintainer's simpler suggested fix and why I diverged from it (it would crash on a dateless project), and a disclosure of how Claude Code was used throughout.
 
 **Maintainer Feedback:**
 
-- 2026-11-03: `dalonsoa` (COLLABORATOR) commented on the issue thread suggesting a simpler version of the fix (just delete the guard lines). I replied explaining why I kept a guard instead: their version would call `project.fte()` unconditionally, which asserts dates are set, so it would crash on a dateless project instead of showing nothing. PR description updated to carry the same explanation for reviewers who don't read the issue thread.
+- 2026-11-03: `dalonsoa` (COLLABORATOR) commented on the issue thread suggesting a simpler version of the fix (just delete the guard lines). I [replied on the issue](https://github.com/ImperialCollegeLondon/proCAT/issues/860#issuecomment-6605364378) explaining why I kept a guard instead: their version would call `project.fte()` unconditionally, which asserts dates are set, so it would crash on a dateless project instead of showing nothing. PR description updated to carry the same explanation for reviewers who don't read the issue thread.
 
-**Status:** Awaiting review
+**Status (2026-11-03):** Open, awaiting review; not merged. The PR conversation has no comments or reviews at this read. The maintainer exchange above happened on the issue thread, not as a PR review.
 
 **Toolkit**
 
