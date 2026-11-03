@@ -66,10 +66,9 @@ Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue e
 
 Manifest: `uv sync` → `uv run mypy .` → `uv run pytest`, sourced from `.github/workflows/ci.yml`, both checks clean on `main` before I touched anything. Installing the ship-gate hit the exact same Windows `claude`-CLI-not-on-PATH issue every tool's eval harness has hit this term; fixed `check_gate.py` the same way, with `shutil.which`. The real value showed up on the first hand-run: `pr-precheck`'s `description-matches-diff` check rejected my branch because my PR description said the renamed test (`test_time_evolution_plot_no_phases_still_shows_allocation_plot`) now covered the no-dates case — it doesn't, it asserts the opposite (the plot now shows); the actual no-dates case is a separate test I'd named loosely. I'd genuinely gotten it backwards, not just worded it sloppily. Fixed the description, re-ran, got `ship-gate: PASS` on the second try, with both the manifest's checks and all eight `pr-precheck` checks passing.
 
-**Unit 8: [one line on the tool work]**
+**Unit 8: Installed the PR-monitor, wrote my playbook from proCAT's own merge rhythm, and caught a real maintainer comment I'd have otherwise missed**
 
-[2-4 sentences: the PR-monitor and your playbook. What it read, what it
-drafted, what you did with the draft.]
+Built the staleness thresholds from the repo's actual merge history (`gh pr list --state merged`), not a guess: human-reviewed PRs sit 1 to 6 days before a batch-review pass, so I set 7 days of total silence before a nudge is even on the table. The free `--state` canary surfaced a failing CI check on my own PR (`pre-commit.ci`'s `ruff`/`ruff-format`, a real gate my manifest had missed since it isn't in `ci.yml` itself) before I'd even written the playbook; fixed it, added `ruff` to `ship-manifest.md`. The full run correctly read the PR thread as quiet under a day and drafted an honest wait note quoting my own 7-day rule instead of a premature nudge, exactly as it should. Separately, re-checking the issue thread by hand (not something the monitor itself reads) turned up a real maintainer comment suggesting a simpler fix than mine; I replied explaining why I kept a guard instead (the maintainer's version would crash on a dateless project), which the voice guard caught and corrected once for overclaiming ("exactly as you described") before it went out. Same Windows `claude`-CLI-not-on-PATH issue as every tool this term, fixed the same way, in `monitor.py` too.
 
 ---
 
@@ -252,20 +251,20 @@ Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: m
 
 **PR Link:** https://github.com/ImperialCollegeLondon/proCAT/pull/867
 
-**PR Description:** The allocation plot on a project's detail page was only shown once someone was actually allocated to the project, because `create_allocation_plot_for_project` returned `None` before ever computing the project's FTE data, which doesn't need any allocations to exist. The fix moves that computation above the guard clause and checks for a missing date range instead of missing allocations. Includes before/after test evidence (272 passed, net +4, mypy clean), a renamed/rewritten test for the behavior that changed, three new direct unit tests for the function itself, an honest note that pre-commit's `markdownlint-cli` hook couldn't be verified locally due to an unrelated Node.js environment issue (not part of the repo's actual CI), and a disclosure of how Claude Code was used throughout.
+**PR Description:** The allocation plot on a project's detail page was only shown once someone was actually allocated to the project, because `create_allocation_plot_for_project` returned `None` before ever computing the project's FTE data, which doesn't need any allocations to exist. The fix moves that computation above the guard clause and checks for a missing date range instead of missing allocations. Includes before/after test evidence (272 passed, net +4, mypy clean, ruff clean), a renamed/rewritten test for the behavior that changed, three new direct unit tests for the function itself, a note on a maintainer's simpler suggested fix and why I diverged from it (it would crash on a dateless project), and a disclosure of how Claude Code was used throughout.
 
 **Maintainer Feedback:**
 
-- 2026-11-03: none yet — just opened.
+- 2026-11-03: `dalonsoa` (COLLABORATOR) commented on the issue thread suggesting a simpler version of the fix (just delete the guard lines). I replied explaining why I kept a guard instead: their version would call `project.fte()` unconditionally, which asserts dates are set, so it would crash on a dateless project instead of showing nothing. PR description updated to carry the same explanation for reviewers who don't read the issue thread.
 
 **Status:** Awaiting review
 
 **Toolkit**
 
-- Tool: ship-gate (ran the manifest's 3 checks, then `pr-precheck` live on the branch), plus the Windows `claude`-CLI-not-on-PATH fix applied to `check_gate.py` itself
-- What it produced: a real, caught mistake before the PR went out — `pr-precheck` flagged that my description conflated the renamed test (which now shows the plot) with the new no-dates test (the one that still shows nothing), which I'd genuinely gotten backwards; fixed it, re-ran, got `ship-gate: PASS`
-- Difficulties: the same Windows PATH issue every tool's eval harness and hook has hit this term; fixed identically with `shutil.which`
-- What changed: the PR description's accuracy, caught by the tool before a maintainer ever saw it
+- Tool: ship-gate (ran the manifest's checks, then `pr-precheck` live on the branch) for the PR itself; the PR-monitor's free `--state` canary for ongoing state, which is what first surfaced the real `pre-commit.ci` failure
+- What it produced: two real catches before/after the PR went out — `pr-precheck` first flagged a description that conflated two tests I'd gotten backwards; separately, the monitor's canary and the live `pre-commit.ci` check both surfaced a real `ruff`/`ruff-format` failure my manifest had missed entirely (not in `ci.yml`, only enforced via the hosted pre-commit bot)
+- Difficulties: the same Windows PATH issue every tool's eval harness and hook has hit this term, fixed identically in `check_gate.py` and later `monitor.py`; a local `pre-commit install` I'd run myself turned out to be broken on this machine (an unrelated Node.js/nodeenv version-parsing bug) and started blocking ordinary commits, so I uninstalled that local hook rather than bypass it with `--no-verify` — the real gate is the hosted `pre-commit.ci`, which doesn't hit that bug
+- What changed: the PR description's accuracy (twice: the test mix-up, then the maintainer-comment explanation), and `ship-manifest.md` now includes `ruff` as a real check
 
 ---
 
@@ -273,25 +272,20 @@ Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: m
 
 **Technical Skills Gained**
 
-[What you learned technically, named concretely.]
+Reading an unfamiliar Django codebase well enough to find a bug's exact location myself, not just where the issue pointed (the issue never named a file; I traced it to `main/plots.py:678` through a scoped orientation). Isolating a bug with a direct, minimal reproduction (calling the function with constructed fixtures) instead of trusting an existing test that turned out to conflate two different code paths. Reading Django ORM/model code closely enough to catch a crash risk (`Project.fte()`'s date assertion) that neither the issue nor the maintainer's own suggested fix had accounted for. Setting up and debugging a real Python/Django project's tooling from scratch on Windows: `uv`, Django migrations, `mypy`, `ruff`, and a local `pre-commit` install that turned out to be broken on this machine for reasons unrelated to my change.
 
 **Challenges Overcome**
 
-[What was hard and how you solved it; point at the real events, the
-Toolkit blocks above are full of them.]
+Three issues in a row fell through before landing on this one: a storage bug I genuinely couldn't reproduce after real investigation, a bug that turned out to already be fixed under a different issue number, and a scan-found repo that needed an instructor exception I hadn't gotten. Each one is a real, evidenced non-reproduction or a real course-correction, not something I papered over; the honest record of all three is in Why I Chose This Issue. Once the real issue was underway, the harder moment was catching my own mistakes before they went out: a voice-guard stop on an overclaimed root cause, a `pr-precheck` catch on a PR description that had two tests' purposes backwards, and a `ruff`/`ruff-format` failure on the live PR that my own manifest had missed because it isn't in the repo's `ci.yml`. Every one of those tools did exactly the job it exists to do.
 
 **What I'd Do Differently Next Time**
 
-[Reflection on your process.]
+Run `ruff check`/`ruff format` locally from the start, rather than trusting `ci.yml` alone to name every real gate a repo enforces — `pre-commit.ci` turned out to be a second, separate gate I only discovered when the live PR's check failed. I'd also re-check an issue's thread for new comments before each tool run, not just when I remembered to; I nearly missed a real maintainer comment because I was focused on the PR thread, which the monitor reads, rather than the issue thread, which it doesn't.
 
 ---
 
 ## Resources Used
 
-[What actually helped, not a reading list. List things this story
-already shows you using: the doc you followed to set the environment
-up, the thread that explained the bug, the person who answered you.
-One real entry beats ten plausible ones.]
-
-- [Link to documentation that helped]
-- [Discussion, issue, or post that helped]
+- `ImperialCollegeLondon/proCAT`'s own `README.md` and `CONTRIBUTING.md` — the actual setup steps (`uv sync`, `python manage.py migrate`, `pytest`) and PR process came from these, not guesswork.
+- `.github/workflows/ci.yml` — the actual source for which checks the ship manifest needed (`mypy`, `pytest`), later found incomplete against the live `pre-commit.ci` check.
+- `dalonsoa`'s comment on the issue thread (https://github.com/ImperialCollegeLondon/proCAT/issues/860#issuecomment-6604364479) — a real maintainer pointing at the exact two lines, which sharpened my fix rather than replaced it.
