@@ -220,17 +220,14 @@ Move the `fte = project.fte(include_excess=False)` computation (and the "Project
 
 ## Testing Strategy
 
-[What observable checks prove the fix: your reproduction steps re-run
-against the built change (before and after), and the repo's own test
-suite or checks with the outcome shown. "Tests pass" with nothing
-observable named is not a strategy.]
+Re-ran the exact reproduction from Reproduction Process on the fix branch: before, `create_allocation_plot_for_project()` returned `None` despite a computable FTE value; after, it returns a real `figure` with a single "Project FTE" legend item. Three new direct unit tests in `tests/main/test_plots.py` cover the function itself (zero allocations, allocations present, no date range — the real remaining no-plot case). `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot` is rewritten and renamed, since its old premise (zero allocations ⇒ no plot) no longer holds; a new test covers the genuinely-still-empty Tentative/no-dates case instead. Full suite: 272 passed (268 on `main`, net +4), `mypy .` clean, matching the ship manifest's checks. Full before/after output in `test_evidence.md`.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: the repo's own test suite (`uv run pytest`, `uv run mypy .`) plus a direct, isolated reproduction re-run on the branch
+- What it produced: 272 passed (net +4 over main's 268), mypy clean, and a before/after transcript showing the exact symptom gone
+- Difficulties: none — the existing test that broke (`test_time_evolution_plot_no_plot`) broke for exactly the reason predicted in the plan, which made rewriting it straightforward rather than a surprise
+- What changed: nothing beyond what the plan already named
 
 ---
 
@@ -239,20 +236,16 @@ observable named is not a strategy.]
 [A running log, added to as you work. Date each entry. What you
 built, decisions you made when you made them, wrong turns included.]
 
-**[Date]**
+**2026-11-03**
 
-[Entry]
-
-**[Date]**
-
-[Entry]
+Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: moved `fte = project.fte(...)` above the guard clause in `create_allocation_plot_for_project` and swapped the allocations check for a dates check. Ran `test_time_evolution_plot_no_plot` first to confirm it failed as predicted (a plot now appears, so its old "no plot" assertion no longer held) — that failure was itself confirmation the fix works, not a problem to hide. Rewrote it to assert the plot *does* appear with just the "Project FTE" line, renamed it since "no_plot" was no longer accurate, and added a genuinely-still-no-plot case (a Tentative project with no dates) to cover the real remaining gate. Also added three direct unit tests on `create_allocation_plot_for_project` itself in `test_plots.py` (zero allocations, allocations present, no dates) — that file had zero prior coverage of this function at all. Full suite: 272 passed (268 on main, net +4), `mypy .` clean. No deviations from the plan.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: `mypy`/`pytest` as a tight build-verify loop, run after each change rather than once at the end
+- What it produced: an immediate, expected test failure that confirmed the fix worked before I'd written a single new test
+- Difficulties: none — the one existing test's docstring was already stale/wrong before I touched it ("Check that a project with no phases has a time evolution plot" on a test that asserted the opposite), a pre-existing small bug I noticed but left alone since it's outside this issue's scope
+- What changed: nothing beyond the plan; the build matched it exactly
 
 ---
 
