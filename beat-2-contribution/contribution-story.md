@@ -2,71 +2,31 @@
 
 Path: `beat-2-contribution/contribution-story.md`
 
-This file is Assignment 5, and it is graded at the path above; a copy kept anywhere else in
-the repository is not read. **Keep every section header below under its exact name** — the
-format criteria grade exactly that. Your course repo link is the whole submission: no tool
-files and no evidence uploads are part of Assignment 5.
-
 **Contribution Number:** [1]
 **Student:** Adith Gunaseelan
 **GitHub Username:** AdithNG
 **Issue:** https://github.com/ImperialCollegeLondon/proCAT/issues/860 (final pick, after #4356, #4293, and intent-drift-skill#80 all fell through on 2026-11-03; see Why I Chose This Issue)
 **Pull Request:** https://github.com/ImperialCollegeLondon/proCAT/pull/867
 
-One repository, built across units 5 to 8, telling the whole story of your real
-contribution. Fill it as you work, not at the end — the sections below ask for evidence that
-is far easier to write down as it happens than to reconstruct in the last weekend.
-
-Contribution Number stays `[1]` unless you make more than one contribution this term; it
-just numbers them.
-
 ---
 
 ## Toolkit
 
-Every story section below, from Why I Chose This Issue through Pull
-Request, ends with a Toolkit block: which tool did that phase's work
-and how you used it, what it produced, what difficulties or
-shortcomings it presented, and what you changed or would change
-because of them. Together the blocks are the thread the rubric's
-Toolkit points read, and they are the raw material for your unit-9
-portfolio, so keep them current as you work rather than
-reconstructing them later.
+The entries below record tool work for Units 5?8. Dates identify the recorded work; earlier issue-selection attempts and later revisits are distinguished in the entries.
 
-A Toolkit block looks like this (copy it into each story section and
-fill it there):
-
-```text
-**Toolkit**
-
-- Tool: [which tool did this phase's work, and how you used it]
-- What it produced: [described in a sentence or a short excerpt]
-- Difficulties: [what fought you or fell short, or "none met"]
-- What changed: [the patch, revision, or workaround, what you would
-  update, or "nothing"]
-```
-
-This section also keeps one short dated entry per week of tool work,
-starting below: what you built or changed that week, what broke, and
-what you changed because of it. The blocks tell the story where it
-happened; these entries are the toolkit's own timeline.
-
-All four entries are graded. Keep every heading below, and fill each
-one in the week it belongs to.
-
-**Unit 5 (recorded 2026-11-03): Installed the scout, wrote a search strategy, and patched a real rubric gap the wild exposed**
+**Unit 5: (recorded 2026-11-03) Installed the scout, wrote a search strategy, and patched a real rubric gap the wild exposed**
 
 I installed the scout overlay on my Unit 1 `issue-select` skill and wrote `search-strategy.md` from my fit profile: three `gh search issues` queries, and a ranking pipeline that drops assigned/frontend-labeled/stale results and sorts the rest by comment count. The first scan's reply never closed with the required fenced JSON block, so I re-ran it with an explicit reminder before trusting the output. The second run graded cleanly, but it surfaced three real problems: one repo took 3 of 5 slots because the comment-count tie-break had no other ordering, a spelling-based label filter would have missed a "dashboard"-labeled frontend issue, and two of the five graded candidates (a screen-recording task, a screenshot-collection task) weren't code changes at all — my Unit 1 `scope-bounded` check passed both anyway, since it had only ever been written against sandbox issues, which are always code changes. I patched the ranking filters (a per-repo cap, a wider label list) and added a real fail condition to `scope-bounded` for non-code deliverables, logged in `scan-notes.md`. Revisited this on 2026-11-03 after my original pick fell through twice (couldn't reproduce one issue's bug on a fresh install, then found a second was already fixed under a different issue number): re-ran the same scan and it surfaced three more gaps no amount of passing checks had caught before — a data-entry task that only failed correctly because I read the repo's own CONTRIBUTING.md, a feature issue blocked by another still-open issue with no check for that at all, and the single best-scoped issue in the batch turning out to need macOS hardware I don't have. None of those are fixed yet; they're logged in `scan-notes.md` as real gaps. Settled on `intent-drift-skill#80` by hand-checking claim status directly via `gh` across a larger batch before reading any bodies, after the Issue Selection site surfaced the same already-claimed problem a third time. That pick needed an instructor exception though, since it came from my own scan rather than the site (the assignment allows this, but says to ask first), so I released it and went back to the site itself instead. Checking claim status *before* reading bodies this time (the same discipline, just applied to the site's own results) caught several more dead ends fast — a repo mistagged Python that's actually Haskell, an issue with four competing open PRs, a Fortran-primary climate-model repo, an internal tracking issue mixed into real candidates, and one good-looking issue already being worked by another contributor with an open PR up. **Final pick: `ImperialCollegeLondon/proCAT#860`**, genuinely clean and sourced from the site itself.
 
-**Unit 6 (2026-11-03): Installed the voice-guard and wrote my repo memory file**
+**Unit 6: (2026-11-03) Installed the voice-guard and wrote my repo memory file**
 
 Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue every eval harness has hit this term; fixed it the same way, with `shutil.which`. The guard caught a real mistake of mine before it went out: an early release-comment draft stated an old bug's root cause as my own verified fact when I'd only read it in a fix commit's comment, never run the broken code myself — the guard quoted my own rule back at me ("I name what I observed and what I only suspect, as two different things") and I rewrote it. For the memory file, one scoped-orientation run on `main/plots.py`/`views.py`/`models.py` found the exact root cause (`create_allocation_plot_for_project` returns early on zero allocations, before computing the project-FTE trace that doesn't need any) plus a caveat I hadn't seen myself: `Project.fte()` asserts dates are set, so the fix needs to guard on missing dates, not missing allocations. It also found that one existing test's premise (`test_time_evolution_plot_no_plot`) breaks once the fix lands and will need rewriting, not just a passing re-run — caught before I wrote a single line of the actual fix.
 
-**Unit 7 (2026-11-03): Installed the ship-gate, wrote my manifest, and let it catch a real mistake before the PR went out**
+**Unit 7: (2026-11-03) Installed the ship-gate, wrote my manifest, and let it catch a real mistake before the PR went out**
 
 Manifest: `uv sync` → `uv run mypy .` → `uv run pytest`, sourced from `.github/workflows/ci.yml`, both checks clean on `main` before I touched anything. Installing the ship-gate hit the exact same Windows `claude`-CLI-not-on-PATH issue every tool's eval harness has hit this term; fixed `check_gate.py` the same way, with `shutil.which`. The real value showed up on the first hand-run: `pr-precheck`'s `description-matches-diff` check rejected my branch because my PR description said the renamed test (`test_time_evolution_plot_no_phases_still_shows_allocation_plot`) now covered the no-dates case — it doesn't, it asserts the opposite (the plot now shows); the actual no-dates case is a separate test I'd named loosely. I'd genuinely gotten it backwards, not just worded it sloppily. Fixed the description, re-ran, got `ship-gate: PASS` on the second try, with both the manifest's checks and all eight `pr-precheck` checks passing.
 
-**Unit 8 (2026-11-03): Installed the PR-monitor, wrote my playbook from proCAT's own merge rhythm, and caught a real maintainer comment I'd have otherwise missed**
+**Unit 8: (2026-11-03) Installed the PR-monitor, wrote my playbook from proCAT's own merge rhythm, and caught a real maintainer comment I'd have otherwise missed**
 
 Built the staleness thresholds from the repo's actual merge history (`gh pr list --state merged`), not a guess: human-reviewed PRs sit 1 to 6 days before a batch-review pass, so I set 7 days of total silence before a nudge is even on the table. The free `--state` canary surfaced a failing CI check on my own PR (`pre-commit.ci`'s `ruff`/`ruff-format`, a real gate my manifest had missed since it isn't in `ci.yml` itself) before I'd even written the playbook; fixed it, added `ruff` to `ship-manifest.md`. The full run correctly read the PR thread as quiet under a day and drafted an honest wait note quoting my own 7-day rule instead of a premature nudge, exactly as it should. I kept that draft local and sent no nudge: under one day of quiet did not meet my seven-day threshold. The 2026-11-03 05:37 monitor report read one passing check, MERGEABLE with merge state BLOCKED, and REVIEW_REQUIRED; mergeability alone did not mean ready to merge. Separately, re-checking the issue thread by hand (not something the monitor itself reads) turned up a real maintainer comment suggesting a simpler fix than mine; I replied explaining why I kept a guard instead (the maintainer's version would crash on a dateless project), which the voice guard caught and corrected once for overclaiming ("exactly as you described") before it went out. Same Windows `claude`-CLI-not-on-PATH issue as every tool this term, fixed the same way, in `monitor.py` too.
 
@@ -114,7 +74,7 @@ The plot should always show, even with zero allocations, starting with just the 
 - Tool: my own reading of the code (scoped orientation, recorded in `CLAUDE.local.md`), confirmed by direct, isolated reproduction (see Reproduction Process)
 - What it produced: the exact fix location and a caveat the issue itself never mentioned (the `start_date`/`end_date` assertion)
 - Difficulties: none specific to this section — the harder part was isolating the bug cleanly, covered in Reproduction Process
-- What changed: nothing yet; this section is the diagnosis the fix is built from
+- What changed: the diagnosis shifted the guard from allocation existence to date availability, so the fix could show an unallocated project without crashing on a dateless one
 
 ---
 
@@ -195,6 +155,8 @@ requirement but never actually states the command).
 
 **Proposed Solution**
 
+The following was the pre-implementation plan; its outcome is recorded in Implementation Notes and Testing Strategy.
+
 Move the `fte = project.fte(include_excess=False)` computation (and the "Project FTE" trace) after a date-range guard, and replace the "no allocations → return None" early exit with a "no dates → return None" check instead, since that's the actual precondition `fte()` needs. The per-user allocation traces stay inside a loop over `Allocation.objects.filter(project=project)`, which naturally produces zero extra traces (just the one "Project FTE" line) when there are no allocations, instead of needing special-case handling. I'm deliberately **not** touching `create_project_evolution_plot` (the separate evolution/usage plot) or the outer `views.py` gate on the combined layout — both are unrelated to this bug, and `#859`'s open PR already touches a different part of this same file (multi-allocation traces), so I'm keeping this change minimal and non-overlapping.
 
 **Implementation Plan**
@@ -203,14 +165,14 @@ Move the `fte = project.fte(include_excess=False)` computation (and the "Project
 2. Rewrite `tests/main/test_views.py::TestProjectDetailInlineView::test_time_evolution_plot_no_plot`, whose current premise (zero phases/allocations ⇒ no plot at all) no longer holds — it needs to assert the plot now *does* appear with just the "Project FTE" line.
 3. Add a direct unit test for `create_allocation_plot_for_project` in `tests/main/test_plots.py` covering the zero-allocation case explicitly (that file currently has zero references to "allocation" at all), per CONTRIBUTING.md's "every addition needs its own tests" rule.
 
-[No deviations yet — will record here if the build surfaces one.]
+Completed on 2026-11-03. The date guard runs before `project.fte(...)`. The implementation followed this plan; the additional lint gate discovered after opening the PR is recorded in the Unit 8 entry.
 
 **Toolkit**
 
 - Tool: plan-check (live mode, `plan.md` + `plan-comment.md` graded against the issue and my own reproduction findings)
 - What it produced: an `accept` verdict on every required check; the one honest miss was the preferred `risk-named` check — my plan states no open risk or unknown anywhere, which is true but worth naming rather than reading as fully certain
 - Difficulties: the skill's live-mode procedure expects a posted week-2 repro comment on the issue as its evidence source, but this unit explicitly says not to post that report — I used my own `repro-draft.md`/Reproduction Process findings as the stand-in instead and flagged the gap rather than inventing a step
-- What changed: nothing in the plan itself yet (it passed as written); noting for my own build that I should state an explicit risk next time rather than writing a fully-confident plan
+- What changed: the plan passed without revision and was implemented; next time I would explicitly name the date-assertion risk instead of leaving that reasoning implicit
 
 ---
 
@@ -243,9 +205,6 @@ uv run ruff format --check .: 56 files already formatted
 
 ## Implementation Notes
 
-[A running log, added to as you work. Date each entry. What you
-built, decisions you made when you made them, wrong turns included.]
-
 **2026-11-03**
 
 Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: replaced the allocations guard in `create_allocation_plot_for_project` with a dates guard, kept `fte = project.fte(...)` after that guard, and queried allocations in the trace loop. Ran `test_time_evolution_plot_no_plot` first to confirm it failed as predicted (a plot now appears, so its old "no plot" assertion no longer held) — that failure was itself confirmation the fix works, not a problem to hide. Rewrote it to assert the plot *does* appear with just the "Project FTE" line, renamed it since "no_plot" was no longer accurate, and added a genuinely-still-no-plot case (a Tentative project with no dates) to cover the real remaining gate. Also added three direct unit tests on `create_allocation_plot_for_project` itself in `test_plots.py` (zero allocations, allocations present, no dates) — that file had zero prior coverage of this function at all. Full suite: 272 passed (268 on main, net +4), `mypy .` clean. No deviations from the plan.
@@ -254,7 +213,7 @@ Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: r
 
 - Tool: `mypy`/`pytest` as a tight build-verify loop, run after each change rather than once at the end
 - What it produced: an immediate, expected test failure that confirmed the fix worked before I'd written a single new test
-- Difficulties: none — the one existing test's docstring was already stale/wrong before I touched it ("Check that a project with no phases has a time evolution plot" on a test that asserted the opposite), a pre-existing small bug I noticed but left alone since it's outside this issue's scope
+- Difficulties: none — the one existing test's docstring was already stale/wrong before I touched it ("Check that a project with no phases has a time evolution plot" on a test that asserted the opposite), a stale description that I corrected when rewriting that test for the new behavior
 - What changed: nothing beyond the plan; the build matched it exactly
 
 ---
