@@ -11,7 +11,7 @@ files and no evidence uploads are part of Assignment 5.
 **Student:** Adith Gunaseelan
 **GitHub Username:** AdithNG
 **Issue:** https://github.com/ImperialCollegeLondon/proCAT/issues/860 (final pick, after #4356, #4293, and intent-drift-skill#80 all fell through on 2026-11-03; see Why I Chose This Issue)
-**Pull Request:** [GitHub PR link, once opened]
+**Pull Request:** https://github.com/ImperialCollegeLondon/proCAT/pull/867
 
 One repository, built across units 5 to 8, telling the whole story of your real
 contribution. Fill it as you work, not at the end — the sections below ask for evidence that
@@ -62,10 +62,9 @@ I installed the scout overlay on my Unit 1 `issue-select` skill and wrote `searc
 
 Installing the voice-guard hit the same Windows `claude`-CLI-not-on-PATH issue every eval harness has hit this term; fixed it the same way, with `shutil.which`. The guard caught a real mistake of mine before it went out: an early release-comment draft stated an old bug's root cause as my own verified fact when I'd only read it in a fix commit's comment, never run the broken code myself — the guard quoted my own rule back at me ("I name what I observed and what I only suspect, as two different things") and I rewrote it. For the memory file, one scoped-orientation run on `main/plots.py`/`views.py`/`models.py` found the exact root cause (`create_allocation_plot_for_project` returns early on zero allocations, before computing the project-FTE trace that doesn't need any) plus a caveat I hadn't seen myself: `Project.fte()` asserts dates are set, so the fix needs to guard on missing dates, not missing allocations. It also found that one existing test's premise (`test_time_evolution_plot_no_plot`) breaks once the fix lands and will need rewriting, not just a passing re-run — caught before I wrote a single line of the actual fix.
 
-**Unit 7: [one line on the tool work]**
+**Unit 7: Installed the ship-gate, wrote my manifest, and let it catch a real mistake before the PR went out**
 
-[2-4 sentences: the ship-gate and your gate manifest. What it produced
-on your real branch, what fought you, what changed because of it.]
+Manifest: `uv sync` → `uv run mypy .` → `uv run pytest`, sourced from `.github/workflows/ci.yml`, both checks clean on `main` before I touched anything. Installing the ship-gate hit the exact same Windows `claude`-CLI-not-on-PATH issue every tool's eval harness has hit this term; fixed `check_gate.py` the same way, with `shutil.which`. The real value showed up on the first hand-run: `pr-precheck`'s `description-matches-diff` check rejected my branch because my PR description said the renamed test (`test_time_evolution_plot_no_phases_still_shows_allocation_plot`) now covered the no-dates case — it doesn't, it asserts the opposite (the plot now shows); the actual no-dates case is a separate test I'd named loosely. I'd genuinely gotten it backwards, not just worded it sloppily. Fixed the description, re-ran, got `ship-gate: PASS` on the second try, with both the manifest's checks and all eight `pr-precheck` checks passing.
 
 **Unit 8: [one line on the tool work]**
 
@@ -251,27 +250,22 @@ Branch `fix/860-always-show-allocation-plot`. Made the fix exactly as planned: m
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when opened]
+**PR Link:** https://github.com/ImperialCollegeLondon/proCAT/pull/867
 
-**PR Description:** [what the PR says; much of the content above
-adapts into it]
+**PR Description:** The allocation plot on a project's detail page was only shown once someone was actually allocated to the project, because `create_allocation_plot_for_project` returned `None` before ever computing the project's FTE data, which doesn't need any allocations to exist. The fix moves that computation above the guard clause and checks for a missing date range instead of missing allocations. Includes before/after test evidence (272 passed, net +4, mypy clean), a renamed/rewritten test for the behavior that changed, three new direct unit tests for the function itself, an honest note that pre-commit's `markdownlint-cli` hook couldn't be verified locally due to an unrelated Node.js environment issue (not part of the repo's actual CI), and a disclosure of how Claude Code was used throughout.
 
 **Maintainer Feedback:**
 
-- [Date]: [feedback received, or "none yet"; silence is a normal
-  state and costs you nothing]
-- [Date]: [how you addressed it]
+- 2026-11-03: none yet — just opened.
 
-**Status:** [Awaiting review / Iterating / Merged / Closed. The
-status is a fact you record, never a grade: the PR is graded as
-opened.]
+**Status:** Awaiting review
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: ship-gate (ran the manifest's 3 checks, then `pr-precheck` live on the branch), plus the Windows `claude`-CLI-not-on-PATH fix applied to `check_gate.py` itself
+- What it produced: a real, caught mistake before the PR went out — `pr-precheck` flagged that my description conflated the renamed test (which now shows the plot) with the new no-dates test (the one that still shows nothing), which I'd genuinely gotten backwards; fixed it, re-ran, got `ship-gate: PASS`
+- Difficulties: the same Windows PATH issue every tool's eval harness and hook has hit this term; fixed identically with `shutil.which`
+- What changed: the PR description's accuracy, caught by the tool before a maintainer ever saw it
 
 ---
 
