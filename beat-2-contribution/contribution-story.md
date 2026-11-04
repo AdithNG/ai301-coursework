@@ -88,12 +88,25 @@ deleted, just no longer the active issue's repro record.*
 
 **Environment Setup**
 
-Fork `AdithNG/proCAT` cloned locally, main branch, current as of
-2026-11-03. Python/Django environment set up with `uv sync` (uv
-0.11.20) and `python manage.py migrate` — no Docker, no SSO/OIDC setup
-needed since this doesn't touch auth. Test runner is plain `pytest`
-(confirmed via README.md; CONTRIBUTING.md describes the testing
-requirement but never actually states the command).
+Fork `AdithNG/proCAT` cloned locally on Windows 11 (64-bit, build
+26100), using PowerShell. The reproduction was run on `main` on
+2026-11-03 before switching to `fix/860-always-show-allocation-plot`.
+The local `.venv/pyvenv.cfg` records CPython 3.13.13 and uv 0.11.20.
+I set up the Python/Django environment with `uv sync` and applied the
+database migrations with `python manage.py migrate`. No Docker or
+SSO/OIDC configuration was needed for this plot change. Checks ran
+inside the project environment with `uv run pytest` and `uv run mypy .`;
+I later added `uv run ruff check .` and `uv run ruff format --check .`.
+
+**Setup difficulties:** The Windows `claude` CLI was not resolved by
+my tool runners; I updated their executable lookup with `shutil.which`,
+as recorded in the Toolkit entries. The local pre-commit hook setup
+also encountered a `markdownlint-cli`/`nodeenv` Node.js version-parsing
+error, so I removed the broken local hook and ran the Python lint and
+format checks directly. The hosted `pre-commit.ci` check subsequently
+passed after the formatting fixes. These tooling difficulties were
+separate from the Django dependency installation and migrations; no
+additional failure in those setup steps is recorded in my notes.
 
 **Steps to Reproduce**
 
